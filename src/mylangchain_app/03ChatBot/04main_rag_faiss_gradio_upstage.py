@@ -72,7 +72,7 @@ def load_pdf_to_vector_store(pdf_file, chunk_size=1000, chunk_overlap=100):
 
 
 # 벡터 저장소에서 문서를 검색하고 답변을 생성
-def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
+def retrieve_and_generate_answers(vectorstore, question, temperature=0.5):
     try:
         # 검색 성능 향상을 위한 retriever 설정
         retriever = vectorstore.as_retriever(
@@ -88,7 +88,7 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
         {context}
         </문맥>
 
-        질문: {question}
+        질문: {input}
 
         답변 규칙:
         1. 문서 내용만을 근거로 답변하세요
@@ -100,8 +100,9 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_template),
-            ("human", "{question}")
+            ("human", "{input}")
         ])
+        #print(prompt)
 
         # ChatModel 인스턴스 생성
         model = ChatUpstage(
@@ -109,6 +110,7 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
                 base_url="https://api.upstage.ai/v1",
                 temperature=float(temperature),
         )
+        print(model.model_name)
 
         # Prompt와 ChatModel을 Chain으로 연결
         document_chain = create_stuff_documents_chain(model, prompt)
@@ -117,11 +119,13 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
         rag_chain = create_retrieval_chain(retriever, document_chain)
 
         # 검색 결과를 바탕으로 답변 생성
-        response = rag_chain.invoke({'question': message})
+        response = rag_chain.invoke({'input': question})
+        print(response)
 
         return response['answer']
         
     except Exception as e:
+        print(e)
         return f"답변 생성 중 오류가 발생했습니다: {str(e)}"
 
 
@@ -226,7 +230,6 @@ def create_interface():
             )
             
             # 채팅 히스토리에 추가
-            #chat_history.append((message, bot_message))
             chat_history.append({"role": "user", "content": message})  # 사용자 메시지 추가
             chat_history.append({"role": "assistant", "content": bot_message})  # 봇 응답 추가
 

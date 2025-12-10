@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-print(OPENAI_API_KEY[30:])
+print(OPENAI_API_KEY[:5])
 
 # API 키 검증
 if not OPENAI_API_KEY:
@@ -105,11 +105,12 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
 
         # ChatModel 인스턴스 생성
         model = ChatOpenAI(
-            #model='gpt-4o-mini', 
-            model='gpt-3.5-turbo', 
+            model='gpt-4o-mini', 
+            #model='gpt-3.5-turbo', 
             temperature=float(temperature),
             api_key=OPENAI_API_KEY
         )
+        print(model.model_name)
 
         # Prompt와 ChatModel을 Chain으로 연결
         document_chain = create_stuff_documents_chain(model, prompt)
@@ -119,6 +120,7 @@ def retrieve_and_generate_answers(vectorstore, message, temperature=0.5):
 
         # 검색 결과를 바탕으로 답변 생성
         response = rag_chain.invoke({'input': message})
+        print(response)
 
         return response['answer']
         
@@ -227,9 +229,8 @@ def create_interface():
             )
             
             # 채팅 히스토리에 추가
-            chat_history.append((message, bot_message))
-            # chat_history.append({"role": "user", "content": message})  # 사용자 메시지 추가
-            # chat_history.append({"role": "assistant", "content": bot_message})  # 봇 응답 추가
+            chat_history.append({"role": "user", "content": message})  # 사용자 메시지 추가
+            chat_history.append({"role": "assistant", "content": bot_message})  # 봇 응답 추가
 
             return chat_history, ""
         
